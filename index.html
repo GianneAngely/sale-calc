@@ -433,7 +433,7 @@ const dragMsg = window.webkit?.messageHandlers?.drag;
 if (dragMsg) {
   let over = false;
   addEventListener('pointerover', e => {
-    const o = !!e.target.closest('.drag');
+    const o = !!e.target.closest('.drag') && !e.target.closest('button'); // keys sit inside the body but must stay clickable
     if (o !== over) dragMsg.postMessage(over = o);
   });
 }
