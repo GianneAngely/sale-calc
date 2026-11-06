@@ -94,7 +94,11 @@ html.app .calc { --w: calc(100vw - 56px); }
   white-space: nowrap;
   font: 600 4.2em/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
+.tape li { cursor: pointer; border-radius: .2em; }
+.tape li:hover { background: rgba(58, 37, 55, .07); }
 .tape li.new { animation: feed .28s ease-out; }
+.tape .thumb { position: absolute; z-index: 3; right: .9em; width: 1.1em; border-radius: 1em; background: var(--ink); opacity: .3; pointer-events: none; }
+.tape .thumb[hidden] { display: none; }
 @keyframes feed { from { height: 0; opacity: 0; } }
 .tape li.start:not(:first-child) { margin-top: .7em; }
 .tape li.total { font-weight: 800; border-top: .12em dashed var(--ink); }
@@ -126,6 +130,11 @@ html.app .calc { --w: calc(100vw - 56px); }
 .brand b { display: block; font-size: 5.6em; font-weight: 800; letter-spacing: .06em; }
 .brand small { display: block; margin-top: .6em; font-size: 2.8em; font-weight: 800; letter-spacing: .14em; opacity: .55; }
 .solar {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
   position: absolute;
   top: 6.5em;
   right: 8.5em;
@@ -149,6 +158,9 @@ html.app .calc { --w: calc(100vw - 56px); }
   border-radius: 2.2em;
   box-shadow: inset 0 .9em 0 rgba(0, 0, 0, .12);
 }
+.solar svg { width: 5.4em; height: 5.4em; color: rgba(255, 233, 241, .3); transition: color .2s; }
+.solar.muted svg { color: #ffe9f1; }
+.ann.long { font-size: 2.8em; }
 .ann { display: flex; justify-content: space-between; height: 1.2em; color: var(--seg); font-size: 3.4em; font-weight: 800; letter-spacing: .08em; }
 #lcd svg { display: block; width: 100%; height: auto; }
 #lcd .on { fill: var(--seg); }
@@ -181,7 +193,14 @@ html.app .calc { --w: calc(100vw - 56px); }
 .k.disc { --kc: var(--disc); --kd: var(--disc-dk); }
 .k.tax { --kc: var(--tax); --kd: var(--tax-dk); }
 .k.ac { --kc: var(--ac); --kd: var(--ac-dk); }
-.k.eq { --kc: var(--eq); --kd: var(--eq-dk); grid-column: 1 / -1; }
+.k.eq { --kc: var(--eq); --kd: var(--eq-dk); grid-column: 2 / -1; }
+/* hold DISC for one-tap discounts */
+.qd { position: absolute; z-index: 5; top: -13em; right: -1em; display: flex; gap: 1.4em; padding: 1.6em 2em; background: #fff; border: .7em solid var(--ink); border-radius: 5em; box-shadow: 0 1em 0 rgba(58, 37, 55, .35); animation: qd .25s cubic-bezier(.3, 1.6, .5, 1); }
+.qd[hidden] { display: none; }
+.qd::after { content: ""; position: absolute; bottom: -2.6em; right: 31em; width: 3.6em; height: 3.6em; background: #fff; border: solid var(--ink); border-width: 0 .7em .7em 0; transform: rotate(45deg); }
+.qd button { width: 9.5em; height: 9.5em; display: grid; place-items: center; margin: 0; padding: 0; font: inherit; color: var(--ink); background: var(--disc); border: .6em solid var(--ink); border-radius: 50%; box-shadow: inset 0 -1em 0 var(--disc-dk); cursor: pointer; }
+.qd button span { font-size: 3.4em; font-weight: 800; }
+@keyframes qd { from { opacity: 0; transform: translateY(2em) scale(.9); } }
 .k.small span { font-size: 5em; }
 </style>
 </head>
@@ -190,11 +209,11 @@ html.app .calc { --w: calc(100vw - 56px); }
   <div class="calc">
     <div class="ear l drag"></div>
     <div class="ear r drag"></div>
-    <div class="tape drag"><ol id="tape" class="drag"></ol></div>
+    <div class="tape" id="tapeBox"><ol id="tape"></ol><i class="thumb" id="thumb" hidden></i></div>
     <div class="slot drag"></div>
     <div class="body drag">
       <div class="brand drag"><b>SALE CALC</b><small>SC-60 · SOLAR</small></div>
-      <div class="solar drag"></div>
+      <button class="solar" data-k="mute" aria-label="Sound on or off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4Z" fill="currentColor"/><path id="sndWaves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <div class="lcd drag">
         <div class="screen drag">
           <div class="ann"><span id="annOp"></span><span id="annOff"></span></div>
@@ -222,7 +241,15 @@ html.app .calc { --w: calc(100vw - 56px); }
         <button class="k small" data-k="000"><span>000</span></button>
         <button class="k" data-k="." aria-label="Decimal point"><span>.</span></button>
         <button class="k op" data-k="+" aria-label="Plus"><span>+</span></button>
+        <button class="k" data-k="neg" aria-label="Plus or minus"><span>±</span></button>
         <button class="k eq" data-k="=" aria-label="Equals"><span>=</span></button>
+        <div class="qd" id="qd" hidden>
+          <button data-q="10" aria-label="10 percent off"><span>10%</span></button>
+          <button data-q="20" aria-label="20 percent off"><span>20%</span></button>
+          <button data-q="30" aria-label="30 percent off"><span>30%</span></button>
+          <button data-q="50" aria-label="50 percent off"><span>50%</span></button>
+          <button data-q="70" aria-label="70 percent off"><span>70%</span></button>
+        </div>
       </div>
     </div>
   </div>
@@ -234,7 +261,7 @@ const CELLS = 12; // digits on the LCD
 const $ = s => document.querySelector(s);
 
 const S = Object.assign(
-  { entry: '0', acc: null, op: null, fresh: true, err: false, offs: [], saved: 0, tape: [] },
+  { entry: '0', acc: null, op: null, fresh: true, err: false, offs: [], saved: 0, tape: [], muted: false },
   (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })()
 );
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -265,15 +292,25 @@ function digit(d) {
     S.fresh = false;
   }
   if (d === '.') { if (!S.entry.includes('.')) S.entry += '.'; return; }
-  const e = (S.entry + d).replace(/^0+(?=\d)/, '');
+  const e = (S.entry + d).replace(/^(-?)0+(?=\d)/, '$1');
   if (e.replace(/\D/g, '').length <= CELLS) S.entry = e;
 }
 function back() {
-  if (!S.fresh) S.entry = S.entry.length > 1 ? S.entry.slice(0, -1) : '0';
+  if (S.fresh) return;
+  const e = S.entry.slice(0, -1);
+  S.entry = e === '' || e === '-' ? '0' : e;
+}
+// ± : flips the number being typed (or the result on screen); right after an operator it starts a negative number
+function neg() {
+  if (S.fresh && S.acc !== null) {
+    if (S.op) { S.entry = '-0'; S.fresh = false; } else S.acc = -S.acc;
+    return;
+  }
+  S.entry = S.entry.startsWith('-') ? S.entry.slice(1) : '-' + S.entry;
 }
 function apply(b) {
   const before = S.acc, r = OPS[S.op](S.acc, b);
-  if (!isFinite(r)) {
+  if (!isFinite(r) || Math.abs(r) >= 1e12) { // too big for the 12-digit screen
     print(label(S.op, b), 'ERROR');
     Object.assign(S, { err: true, acc: null, op: null });
     return false;
@@ -284,7 +321,7 @@ function apply(b) {
   return true;
 }
 function operate(op) {
-  if (S.acc === null) {
+  if (S.acc === null || (!S.op && !S.fresh)) { // a new number typed after a quick discount starts over
     S.acc = num(S.entry);
     S.offs = [];
     S.saved = 0;
@@ -294,15 +331,25 @@ function operate(op) {
   S.fresh = true;
 }
 function equals() {
-  if (S.acc === null || !S.op) return;
-  if (!S.fresh && !apply(num(S.entry))) return;
+  if (S.acc === null || (!S.op && !S.fresh)) return;
+  if (S.op && !S.fresh && !apply(num(S.entry))) return;
   print('TOTAL', S.acc, 'total');
   if (S.offs.length) { print('SAVED', S.saved, 'saved'); print('TOTAL OFF', `${fmt(off())}%`, 'saved'); }
   Object.assign(S, { entry: String(round2(S.acc)), acc: null, op: null, fresh: true });
 }
+// hold DISC: take 10/20/30/50/70% off the running total in one tap
+function quick(d) {
+  if (S.acc === null || (!S.op && !S.fresh)) operate('-%');
+  else if (S.op && !S.fresh && !apply(num(S.entry))) return;
+  S.op = '-%';
+  apply(d);
+  S.op = null;
+  S.fresh = true;
+}
 function clearAll() {
   const old = [...$('#tape').children];
   Object.assign(S, { entry: '0', acc: null, op: null, fresh: true, err: false, offs: [], saved: 0, tape: [] });
+  scrollTo(0);
   if (!old.length) return;
   const t = $('.tape');
   t.classList.add('tear'); // tear the paper off
@@ -321,7 +368,53 @@ function print(l, r, kind) {
   S.tape.push(row);
   if (S.tape.length > 40) { S.tape.shift(); $('#tape').firstElementChild?.remove(); }
   $('#tape').append(line(row, true));
+  scrollTo(0); // follow the newest line
   zip();
+}
+// the tape scrolls (wheel or drag) to read older lines; tapping a line reuses its number
+let tapeY = 0;
+function scrollTo(y) {
+  const ol = $('#tape'), box = $('#tapeBox'), max = Math.max(0, ol.offsetHeight - box.clientHeight * 0.75);
+  tapeY = Math.min(max, Math.max(0, y));
+  ol.style.transform = tapeY ? `translateY(${tapeY}px)` : '';
+  const th = $('#thumb');
+  th.hidden = !max;
+  if (max) {
+    const view = box.clientHeight * 0.6, h = Math.max(16, view * view / (view + max));
+    th.style.height = h + 'px';
+    th.style.top = (box.clientHeight * 0.35 + (view - h) * (1 - tapeY / max)) + 'px';
+  }
+}
+function useLine(li) {
+  const v = parseFloat(li.lastElementChild.textContent.replace(/[,%]/g, ''));
+  if (!isFinite(v)) return;
+  audio();
+  click();
+  if (S.err) Object.assign(S, { err: false, acc: null, op: null });
+  if (S.fresh && S.acc === null) S.offs = [];
+  S.entry = String(v);
+  S.fresh = false;
+  save();
+  render();
+}
+{
+  const box = $('#tapeBox');
+  let drag = null;
+  box.addEventListener('wheel', e => { e.preventDefault(); scrollTo(tapeY - e.deltaY); }, { passive: false });
+  box.addEventListener('pointerdown', e => { drag = { y: e.clientY, from: tapeY, moved: false }; box.setPointerCapture(e.pointerId); });
+  box.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
+    if (drag.moved) scrollTo(drag.from + e.clientY - drag.y);
+  });
+  box.addEventListener('pointerup', e => {
+    if (drag && !drag.moved) {
+      const li = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.closest?.('#tape li'))?.closest('li');
+      if (li) useLine(li);
+    }
+    drag = null;
+  });
+  box.addEventListener('pointercancel', () => { drag = null; });
 }
 
 /* ---------- LCD: 7-segment digits drawn in SVG ---------- */
@@ -353,8 +446,12 @@ function showEntry(e) {
 function render() {
   const text = S.err ? 'E' : !S.fresh ? showEntry(S.entry) : fmt(S.acc !== null ? S.acc : num(S.entry));
   $('#lcd').innerHTML = lcd(text.replace(/\D/g, '').length > CELLS ? 'E' : text);
-  $('#annOp').textContent = S.op ? SYM[S.op] : '';
-  $('#annOff').textContent = S.offs.length ? `TOTAL OFF ${fmt(off())}%` : '';
+  $('#annOp').textContent = Date.now() < copiedUntil ? 'COPIED' : S.op ? SYM[S.op] : '';
+  const offTxt = S.offs.length ? `SAVE ${fmt(S.saved)} · ${fmt(off())}% OFF` : '';
+  $('#annOff').textContent = offTxt;
+  document.querySelector('.ann').classList.toggle('long', offTxt.length > 22);
+  $('.solar').classList.toggle('muted', S.muted);
+  $('#sndWaves').style.display = S.muted ? 'none' : '';
 }
 
 /* ---------- sound ---------- */
@@ -364,7 +461,7 @@ function audio() {
   if (ac && ac.state !== 'running') ac.resume().catch(() => {});
 }
 function click() {
-  if (!ac || ac.state !== 'running') return;
+  if (!ac || ac.state !== 'running' || S.muted) return;
   const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
   o.frequency.setValueAtTime(1100, t);
   o.frequency.exponentialRampToValueAtTime(600, t + 0.04);
@@ -375,7 +472,7 @@ function click() {
   o.stop(t + 0.06);
 }
 function zip() { // tiny dot-matrix printer
-  if (!ac || ac.state !== 'running') return;
+  if (!ac || ac.state !== 'running' || S.muted) return;
   if (!noise) {
     noise = ac.createBuffer(1, ac.sampleRate * 0.1, ac.sampleRate);
     const d = noise.getChannelData(0);
@@ -398,10 +495,12 @@ function zip() { // tiny dot-matrix printer
 /* ---------- input ---------- */
 function press(k) {
   audio();
+  if (k === 'mute') { S.muted = !S.muted; click(); save(); render(); return; } // the solar panel
   click();
   if (S.err && k !== 'ac') Object.assign(S, { err: false, acc: null, op: null, entry: '0', fresh: true });
   if (/^(\d|000|\.)$/.test(k)) digit(k);
   else if (k === 'back') back();
+  else if (k === 'neg') neg();
   else if (k === 'ac') clearAll();
   else if (k === '=') equals();
   else operate(k);
@@ -414,13 +513,61 @@ function flash(k) {
   el.classList.add('press');
   setTimeout(() => el.classList.remove('press'), 110);
 }
+let holdT = null;
+const quickMenu = show => { $('#qd').hidden = !show; };
 document.querySelectorAll('[data-k]').forEach(el => {
-  el.addEventListener('pointerdown', e => { e.preventDefault(); el.classList.add('press'); press(el.dataset.k); });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => el.addEventListener(t, () => el.classList.remove('press')));
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    el.classList.add('press');
+    if (el.dataset.k === '-%') { holdT = setTimeout(() => { holdT = null; quickMenu(true); }, 420); return; } // tap = −%, hold = quick menu
+    press(el.dataset.k);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => el.addEventListener(t, e => {
+    el.classList.remove('press');
+    if (el.dataset.k === '-%' && holdT) { clearTimeout(holdT); holdT = null; if (e.type === 'pointerup') press('-%'); }
+  }));
 });
-const KEYS = { Enter: '=', '=': '=', Backspace: 'back', Escape: 'ac', Delete: 'ac', '*': '*', x: '*', '/': '/', '+': '+', '-': '-', '%': '-%', d: '-%', t: '+%', '.': '.', ',': '.' };
+document.querySelectorAll('[data-q]').forEach(el => el.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  quickMenu(false);
+  audio();
+  click();
+  if (S.err) Object.assign(S, { err: false, acc: null, op: null, entry: '0', fresh: true });
+  quick(+el.dataset.q);
+  save();
+  render();
+}));
+addEventListener('pointerdown', e => { if (!e.target.closest('#qd, [data-k="-%"]')) quickMenu(false); }, true);
+// copy the number on the screen: ⌘C / Ctrl+C (also from the Edit menu in the macOS app)
+let copiedUntil = 0;
+function shownNumber() { return S.err ? '' : String(round2(!S.fresh ? num(S.entry) : S.acc !== null ? S.acc : num(S.entry))); }
+function copied() { copiedUntil = Date.now() + 1200; render(); setTimeout(render, 1250); }
+function copyNumber() {
+  const v = shownNumber();
+  if (!v) return;
+  (navigator.clipboard?.writeText(v) || Promise.reject()).then(copied, () => {
+    const t = document.createElement('textarea');
+    t.value = v;
+    document.body.append(t);
+    t.select();
+    document.execCommand('copy');
+    t.remove();
+    copied();
+  });
+}
+document.addEventListener('copy', e => {
+  if (String(getSelection())) return;
+  const v = shownNumber();
+  if (!v) return;
+  e.preventDefault();
+  e.clipboardData.setData('text/plain', v);
+  copied();
+});
+const KEYS = { n: 'neg', Enter: '=', '=': '=', Backspace: 'back', Escape: 'ac', Delete: 'ac', '*': '*', x: '*', '/': '/', '+': '+', '-': '-', '%': '-%', d: '-%', t: '+%', '.': '.', ',': '.' };
 addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c' && !String(getSelection())) { e.preventDefault(); return copyNumber(); }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape' && !$('#qd').hidden) return quickMenu(false);
   const k = /^\d$/.test(e.key) ? e.key : KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
   if (!k) return;
   e.preventDefault();
@@ -439,6 +586,7 @@ if (dragMsg) {
 }
 
 S.tape.forEach(row => $('#tape').append(line(row)));
+scrollTo(0);
 $('#lcd').innerHTML = lcd('8.8.8.8.8.8.8.8.8.8.8.8.'); // power-on flash
 setTimeout(render, 350);
 </script>

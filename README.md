@@ -26,9 +26,12 @@ This puts **Sale Calc.app** in `/Applications`. Drag the calculator by its body 
 ## What's inside
 
 - **−% and +%** — take a percentage off the running total, or add one for tax and service
-- **Paper tape** — every step prints with its running total, plus how much you saved and the real combined discount
-- **Total off** — the display shows the combined discount while you stack them
-- **Everyday math** — plus, minus, times, divide, and a `000` key for long Rupiah prices
+- **Quick discounts** — hold −% for 10, 20, 30, 50, and 70% off in one tap
+- **Paper tape** — every step prints with its running total, plus how much you saved and the real combined discount. Scroll it to read older lines, and tap a line to use its number again
+- **You save** — the display shows how much you save and the combined discount while you stack them ("SAVE 120,000 · 60% OFF")
+- **Everyday math** — plus, minus, times, divide, ± for negative numbers, and a `000` key for long Rupiah prices
+- **Copy** — `⌘C` copies the number on the screen
+- **Sound switch** — tap the solar panel to turn the key clicks off
 - **Keeps the tape** — reload or reopen, and your last calculations are still there
 
 ## Controls
@@ -40,7 +43,9 @@ This puts **Sale Calc.app** in `/Applications`. Drag the calculator by its body 
 | −% | `%` or `D` | Take a percentage off |
 | +% | `T` | Add a percentage (tax, service) |
 | ÷ × − + | `/` `*` `-` `+` | Everyday math |
+| ± | `N` | Make the number negative |
 | = | `Enter` | Total |
+| Solar panel | | Sound on or off |
 
 ## Built with
 
