@@ -1,10 +1,14 @@
-# 🧮 Sale Calc
+# Sale Calc
 
-A tiny pink calculator for **shopping math**. Stack discounts, add tax or a service charge, and split the bill while a little paper tape prints every step, so you can see that 50% off plus another 20% off is really **60% off**, not 70%. It runs in any modern browser, and it also builds into a small macOS app where only the calculator floats on your desktop.
+A tiny pink calculator for **shopping math**. Stack discounts, add tax or a service charge, and split the bill while a little paper tape prints every step, so you can see that 50% off plus another 20% off is really **60% off**, not 70%, and how much you **save**. Hold the discount key for one-tap 10, 20, 30, 50, or 70% off. It runs in any modern browser, and it also builds into a small macOS app where only the calculator floats on your desktop.
 
-![Sale Calc: two stacked discounts plus tax, and a bill split four ways](screenshot.png)
+![Sale Calc: 50% then 20% off with the quick-discount menu open, and a bill with 11% tax split four ways](screenshot.png)
+
+![Sale Calc in action: holding the discount key for 50% off, then another 20%, and the tape prints the savings](demo.gif)
 
 ## Try it
+
+Open it right in your browser at **[gianneangely.github.io/sale-calc](https://gianneangely.github.io/sale-calc/)**, or get your own copy:
 
 ```bash
 git clone https://github.com/GianneAngely/sale-calc.git
